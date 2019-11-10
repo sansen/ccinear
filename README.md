@@ -1,14 +1,14 @@
 
 # Table of Contents
 
-1.  [INFORMACION GENERAL](#org937142a)
-2.  [INSTALACION](#org80e7521)
-3.  [CONFIGURACION](#orgcbbd2b0)
-4.  [USO:](#org76aecb7)
+1.  [INFORMACION GENERAL](#orgd25d433)
+2.  [INSTALACION](#org639ec04)
+3.  [CONFIGURACION](#org34a9764)
+4.  [USO](#orge9d5347)
 
 
 
-<a id="org937142a"></a>
+<a id="orgd25d433"></a>
 
 # INFORMACION GENERAL
 
@@ -23,7 +23,7 @@ El SID se muestra en la informacion desplegada en consola cuando
 busca la pelicula o cuando ejecutas con -H.
 
 
-<a id="org80e7521"></a>
+<a id="org639ec04"></a>
 
 # INSTALACION
 
@@ -40,58 +40,66 @@ Dependencias adicionales:
 -   Utiliza mpv para reproducir los videos.
 
 
-<a id="orgcbbd2b0"></a>
+<a id="org34a9764"></a>
 
 # CONFIGURACION
 
 Se puede definir un archivo de configuracion:
-'config.yaml'
-en el mismo directorio donde se encuentra el script, con el siguiente
-contenido:
 
-email: mail@servider.com
-prefered<sub>video</sub><sub>quality</sub>: '480p'
-download<sub>directory</sub>: *ruta/de/descarga*
+'config.yaml'
+
+en el mismo directorio donde se encuentra el script, con el siguiente contenido:
+
+    email: mail@servider.com
+    prefered_video_quality: '480p'
+    download_directory: /ruta/de/descarga/
 
 -   donde 'email' es el mail del usuario de cinear,
--   donde 'download<sub>directory</sub>', es el path absoluto donde descargar
+-   donde 'download\_directory', es el path absoluto donde descargar los archivos. Por defecto sera en el mismo directorio del
 
-los archivos. Por defecto sera en el mismo directorio del 
 script. 
 
--   donde 'prefered<sub>video</sub><sub>quality</sub>' la calidad preferida para las descargas
+-   donde 'prefered\_video\_quality' la calidad preferida para las descargas
 
-o visualizaciones. Los posibles valores son:
-240p, 360p, 480p, 720p, etc. Por defecto sera 720p
+o visualizaciones. Los posibles valores son: 240p, 360p, 480p, 720p, etc. Por defecto sera 720p
 
-Si no existe el archivo de configuracion se tomaran valores por defecto
-y sera necesario especificar las credenciales de cine.ar en cada consulta.
+Si no existe el archivo de configuracion se tomaran valores por defecto y sera necesario especificar las credenciales de cine.ar en cada consulta.
 
 
-<a id="org76aecb7"></a>
+<a id="orge9d5347"></a>
 
-# USO:
+# USO
 
-No te olvides de agregar tus credenciales de cine.ar al script.
--TODO: Credenciales por medio de configuracion.
-
-      cinear.py (play | -p) SID
-      cinear.py (download | -d) SID
-      cinear.py (home | -H) [<tira>] Ejemplo: python ccinear.py -H 'Series Web'
-      cinear.py (search | -s) <string>
-      cinear.py (-h | --help)
-      cinear.py --version
+    Usage:
+      ccinear.py [--user=<user>] [--passw] (play | -p) SID
+      ccinear.py [--user=<user>] [--passw] (download | -d) SID
+      ccinear.py [--user=<user>] [--passw] (home | -H) [<tira>]
+      ccinear.py [--user=<user>] [--passw] (search | -s) <string>
+      ccinear.py (-h | --help)
+      ccinear.py --version
     
     Options:
       -h --help   Show this screen.
-      --version   Show version.
+      version   Show version.
       SID         INCAA, Produccion ID
       <string>    String to search for
-      <tira>      Nombre de la Tira
+      <tira>      Lista de tiras, respetando la siguiente designacion
+          - tendencias: Tendencias,
+          - novedades: Novedades de esta semana,
+          - recomendadas: Películas recomendadas,
+          - amor: Por amor,
+          - mdq: MDQ Film Festival,
+          - series_maraton: Maratón de series,
+          - series_web: Series Web,
+          - clasicos: Clásicos exclusivos,
+          - animacion: Animación,
+          - cortos: Cortos imperdibles,
+          - musica: Música,
+          - biopics: Biopics,
+          - familia: Para ver en familia,
+      E.g: ccinear.py -H 'tendencias, amor, mdq'
 
 Ejemplo de uso:
-
----
 
 Ver portada de cinear (Informacion de contenido separados por seccion)
 
