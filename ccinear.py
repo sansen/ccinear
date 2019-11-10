@@ -133,9 +133,10 @@ def auth_login():
         )
         TOKEN = r.json()['token']
 
-    except Exception as e:
+    except Exception:
         print('Fallo la autenticacion')
         exit()
+
 
 def search(term, perfil):
     """Buscar termnio en cinear"""
@@ -305,7 +306,9 @@ def production_chuncks(data, digest_clave, play=True):
         )
 
         if r.status_code == 403 or r.status_code == 404:
-            print("Fallo la busqueda de la produccion, o la misma es inexistente")
+            print(
+                "Fallo la busqueda de la produccion, o la misma es inexistente"
+            )
             exit()
 
         for prod in r.json()['items']:
@@ -327,7 +330,6 @@ def production_chuncks(data, digest_clave, play=True):
     else:
         print("Fallo la busqueda de la produccion, o la misma es inexistente")
         exit(0)
-            
 
 
 def download_chuncks(title, chuncks_url, chuncks, play=True):
@@ -373,13 +375,13 @@ if __name__ == '__main__':
     except Exception:
         config = None
 
-    # Setting User 
+    # Setting User
     if args['--user']:
         email = args['--user']
         if config:
             with open('config.yaml', 'w') as f:
                 yaml.dump(config, f)
-    else:  
+    else:
         try:
             email = config['user']
         except Exception:
@@ -387,7 +389,7 @@ if __name__ == '__main__':
             print('Setee sus credenciales de Cine.ar usando --user')
             exit()
 
-    # Setting Password 
+    # Setting Password
     if args['--passw']:
         passw = getpass()
         if config:
