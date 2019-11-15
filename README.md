@@ -1,16 +1,16 @@
 
-# Table of Contents
+# Contenidos
 
-1.  [INFORMACION GENERAL](#orgc2acf3c)
-2.  [INSTALACION](#org6169e9a)
-3.  [CONFIGURACION](#org707eebd)
-4.  [USO](#org19a6af0)
+1.  [Informacion general](#org8bad059)
+2.  [Instalacion](#org6f494c9)
+3.  [Configuracion](#org320a85b)
+4.  [Uso](#org81bb7e4)
 
 
 
-<a id="orgc2acf3c"></a>
+<a id="org8bad059"></a>
 
-# INFORMACION GENERAL
+# Informacion general
 
 Maneja la interfaz de cine.ar desde la consola,
 realiza backups de tus peliculas favoritas, miralas offline.
@@ -19,26 +19,32 @@ realiza backups de tus peliculas favoritas, miralas offline.
 el desarrollo del cine argentino.
 
 
-<a id="org6169e9a"></a>
+<a id="org6f494c9"></a>
 
-# INSTALACION
+# Instalacion
 
 Crear un entorno virtual, instala las dependencias con pip y usalo
+
+Clonar el repositorio:
+
+    $ git clone https://github.com/sansen/ccinear.git
+
+Creacion de Virtualenv:
 
     $ virtualenv --python=python3 cinear
     $ cd cinear
     $ source bin/activate
     $ pip install -r requeriments.txt
-    $ python ./ccinear.py -H
+    $ python ./ccinear.py --user=<email>@<server>.com -H
 
 Dependencias adicionales:
 
 -   Utiliza mpv para reproducir los videos.
 
 
-<a id="org707eebd"></a>
+<a id="org320a85b"></a>
 
-# CONFIGURACION
+# Configuracion
 
 Se puede definir un archivo de configuracion:
 
@@ -47,19 +53,19 @@ Se puede definir un archivo de configuracion:
 en el mismo directorio donde se encuentra el script, con el siguiente contenido:
 
     email: mail@servider.com
-    prefered_video_quality: '480p'
-    download_directory: /ruta/de/descarga/
+    prefered\_video\_quality: '480p'
+    download\_directory: /ruta/de/descarga/
 
 -   donde 'email' es el mail del usuario de cinear,
--   donde 'download\_directory', es el path absoluto donde descargar los archivos. Por defecto sera en el mismo directorio del script.
+-   donde 'download\_dir', es el path absoluto donde descargar los archivos. Por defecto sera en el mismo directorio del script.
 -   donde 'prefered\_video\_quality' la calidad preferida para las descargas o visualizaciones. Los posibles valores son: 240p, 360p, 480p, 720p, etc. Por defecto sera 720p
 
 Si no existe el archivo de configuracion se tomaran valores por defecto y sera necesario especificar las credenciales de cine.ar en cada consulta.
 
 
-<a id="org19a6af0"></a>
+<a id="org81bb7e4"></a>
 
-# USO
+# Uso
 
 Cada pelicula tiene un SID, con el cual la podes referenciar.
 El SID se muestra en la informacion desplegada en consola cuando busca la pelicula o cuando ejecutas con -H.
@@ -95,6 +101,14 @@ El SID se muestra en la informacion desplegada en consola cuando busca la pelicu
 
 Ejemplo de uso:
 
+Ver pelicula
+
+    python ccinear.py -p 5717
+
+Descarga pelicula
+
+    python ccinear.py -d 5717
+
 Ver portada de cinear (Informacion de contenido separados por seccion)
 
     python ccinear.py -H 'Series Web'
@@ -104,7 +118,7 @@ con colores.
 
     python ccinear.py -s 'Cetaceos' | grep -E --color=auto '^|^SID:[ 0-9]+|^[A-Z ,:.]*$'
 
-    python ccinear.py -H 'Novedades de esta semana' | grep -E --color=auto '^|^SID:[ 0-9]+|^::[A-Z :,.]*::'
+    python ccinear.py -H 'novedades' | grep -E --color=auto '^|^SID:[ 0-9]+|^::[A-Z :,.]*::'
 
 -   TODO: Agregar colores y paginacion.
 
