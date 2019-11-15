@@ -27,7 +27,7 @@ No infringas el copyright
 
 Usage:
   ccinear.py [--user=<user>] [--passw] (play | -p) SID
-  ccinear.py [--user=<user>] [--passw] (download | -d) SID
+  ccinear.py [--user=<user>] [--passw] [--path=/path/to/downloaddir/] (download | -d) SID
   ccinear.py [--user=<user>] [--passw] (home | -H) [<tira>]
   ccinear.py [--user=<user>] [--passw] (search | -s) <string>
   ccinear.py (-h | --help)
@@ -35,7 +35,7 @@ Usage:
 
 Options:
   -h --help   Show this screen.
-  version   Show version.
+  version     Show version.
   SID         INCAA, Produccion ID
   <string>    String to search for
   <tira>      Lista de tiras, respetando la siguiente designacion
@@ -335,7 +335,14 @@ def production_chuncks(data, digest_clave, play=True):
 def download_chuncks(title, chuncks_url, chuncks, play=True):
     """Descarga de fragmentos de pelicula."""
     # file = open("movie.txt","w")
-    name = title
+    name = title.lower().replace(' ','_')+'.avi'
+    
+    if config:
+        video_path = config['download_dir']
+        name = os.path.join(video_path, name)
+    else:
+        name = os.path.join('', name)
+
     has_started = False
 
     i = 0
@@ -343,17 +350,21 @@ def download_chuncks(title, chuncks_url, chuncks, play=True):
         if chunck.startswith("media_"):
             i = i+1
             urllib.request.urlretrieve(
-                "{0}/{1}\n".format(chuncks_url, chunck), name+str(i)
+                "{0}/{1}\n".format(chuncks_url, chunck), name+'.part'+str(i)
             )
             if not has_started:
                 has_started = True
-                if play:
-                    pprocess = start_playing(name+str(i))
-            else:
-                with open(name+"1", "ab") as myfile, \
-                     open(name+str(i), "rb") as file2:
+                with open(name, "ab") as myfile, \
+                     open(name+'.part'+str(i), "rb") as file2:
                     myfile.write(file2.read())
-                    os.remove(name+str(i))
+                    os.remove(name+'.part'+str(i))
+                if play:
+                    pprocess = start_playing(name)
+            else:
+                with open(name, "ab") as myfile, \
+                     open(name+'.part'+str(i), "rb") as file2:
+                    myfile.write(file2.read())
+                    os.remove(name+'.part'+str(i))
     try:
         pprocess.wait()
     except Exception:
@@ -379,6 +390,7 @@ if __name__ == '__main__':
     if args['--user']:
         email = args['--user']
         if config:
+            config['user'] = args['--user']
             with open('config.yaml', 'w') as f:
                 yaml.dump(config, f)
     else:
