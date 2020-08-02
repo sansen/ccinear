@@ -12,7 +12,7 @@
 #
 # For further info, check  https://launchpad.net/encuentro
 #
-# Copyright 2019 Santiago Torres Batan
+# Copyright 2019-2020 Santiago Torres Batan
 
 """Console CineAR
 Maneja la interfaz de cine.ar desde la consola,
@@ -76,24 +76,25 @@ class CineAR:
 
         self.TOKEN = None
         self.auth = None
+        self.perfil = None
 
         self.TIRAS = {
-            'tendencias': 'Tendencias',
-            'novedades': 'Novedades de esta semana',
+            'novedades': 'Novedades',
             'recomendadas': 'Películas recomendadas',
-            'amor': 'Por amor',
-            'mdq': 'MDQ Film Festival',
-            'series_maraton': 'Maratón de series',
-            'series_web': 'Series Web',
-            'clasicos': 'Clásicos exclusivos',
-            'animacion': 'Animación',
-            'cortos': 'Cortos imperdibles',
-            'musica': 'Música',
+            'lomasvisto': 'Lo más visto',
+            'series': 'Series imperdibles',
+            'cortos': 'Cortos para toda la familia',
+            'documentales': 'Documentales',
             'biopics': 'Biopics',
-            'familia': 'Para ver en familia',
+            'mayores': 'Apto para mayores',
+            'policiales': 'Policiales',
+            'clasicos': 'Clásicos exclusivos',
+            'breves': 'Historias Breves',
+            'diversidad': 'Cine y Diversidad',
         }
 
         self.session = requests.Session()
+        self.items = 0
 
     def get_headers(self, token=None, auth=None):
         """Obtener header para request http"""
@@ -127,7 +128,7 @@ class CineAR:
             r = self.session.post(
                 auth_url,
                 json=self.credentials
-                #headers=get_headers()
+                # headers=get_headers()
             )
             self.TOKEN = r.json()['token']
             self.session.headers.update(self.get_headers())
@@ -136,25 +137,40 @@ class CineAR:
             print('Fallo la autenticacion')
             exit()
 
-
-    def search(self, term, perfil):
+    def search(self, term):
         """Buscar termnio en cinear"""
         search_url = "{0}/search/{1}?cant=24&orden=rele&pag=1&perfil={2}".format(
-            self.API_URI, term, perfil
+            self.API_URI, term, self.perfil
         )
         r = self.session.get(search_url)
 
+        items = []
         for prod in r.json()['prods']:
+            subitems = []
             self.display_production(prod)
+            if prod.get('capitulo', '') is None:
+                subitems = self.search_subproductions(prod)
+            items.append(
+                {
+                    'sid': prod['id']['sid'],
+                    'titulo': prod['tit'],
+                    'sino': prod['sino'],
+                    'dura': prod.get('dura', ''),
+                    'foto': prod.get('foto', ''),
+                    'anio': prod.get('an', ''),
+                    'rate': prod.get('rProme', 3),
+                    'subitems': subitems,
+                }
+            )
             print("-"*80)
+        return items
 
-
-    def user_home(self, perfil, tipotira='all'):
+    def user_home(self, tipotira='all'):
         """HOME: Portada de cinear"""
-        home_url = "{0}/home?perfil={1}".format(self.API_URI, perfil)
+        home_url = "{0}/home?perfil={1}".format(self.API_URI, self.perfil)
         r = self.session.get(home_url)
-        self.get_tiras(r.json(), tipotira)
-
+        items = self.get_tiras(r.json(), tipotira)
+        return items
 
     def get_tiras(self, data, tipotira='all'):
         prods = data['prods']
@@ -172,39 +188,51 @@ class CineAR:
                     print('El nombre de tira ingresado es incorrecto:', tira)
                     exit()
 
-                    tmp = list(filter(
-                        lambda x: x['titulo'] != 'Estrenos en simultáneo al cine'
-                        and x['titulo'] == self.TIRAS[tira.strip()], data['tiras']
-                    ))
-                    tiras.extend(tmp)
+                tmp = list(filter(
+                    lambda x: x['titulo'] != 'Estrenos en simultáneo al cine'
+                    and x['titulo'] == self.TIRAS[tira.strip()], data['tiras']
+                ))
+                tiras.extend(tmp)
 
-            for tira in tiras:
-                print(tira['titulo'].upper())
-                print("="*80)
-                for conte in tira['conte']:
-                    self.display_production(prods[conte], tira)
-                    print("-"*80)
+        items = []
+        for tira in tiras:
+            print(tira['titulo'].upper())
+            print("="*80)
+            for conte in tira['conte']:
+                subitems = []
+                if prods[conte].get('capitulo', '') is None:
+                    subitems = self.search_subproductions(prods[conte])
+                items.append(
+                    {
+                        'sid': prods[conte]['id']['sid'],
+                        'titulo': prods[conte]['tit'],
+                        'sino': prods[conte]['sino'],
+                        'dura': prods[conte].get('dura', ''),
+                        'foto': prods[conte].get('foto', ''),
+                        'anio': prods[conte].get('an', ''),
+                        'rate': prods[conte].get('rProme', 3),
+                        'subitems': subitems,
+                    }
+                )
+                self.display_production(prods[conte], tira)
+                print("-"*80)
 
+        return items
 
     def user_info(self):
         """Informacion del Usuario."""
         user_info_url = '{0}/auth/user_info'.format(self.ID_URI)
         r = self.session.get(user_info_url)
-            
-        return perfil
-
+        return r
 
     def user_pid(self):
         """Obtener el perfil del Usuario."""
         user_url = "{0}/user".format(self.API_URI)
         r = self.session.get(user_url)
         user = r.json()
-        perfil = user['perfiles'][0]['id']
+        self.perfil = user['perfiles'][0]['id']
 
-        return perfil
-
-
-    def production_id(self, sid, perfil, source="INCAA"):
+    def production_id(self, sid, source="INCAA"):
         """
         Obtener URL de produccion  con la info necesaria:
         source = "INCAA"
@@ -213,10 +241,10 @@ class CineAR:
         token = token
         """
         url = '{0}?s={1}&i={2}&p={3}&t={4}'.format(
-            self.PLAYER_URL, source, sid, perfil, self.TOKEN
+            self.PLAYER_URL, source, sid, self.perfil, self.TOKEN
         )
 
-        clave = source + sid + perfil + self.TOKEN + 'ARSAT'
+        clave = source + sid + self.perfil + self.TOKEN + 'ARSAT'
         clave = clave.encode('utf-8')
 
         digest = hashlib.md5(clave).digest()
@@ -227,7 +255,6 @@ class CineAR:
 
         r = self.session.get(url)
         return r.json(), digest_clave
-
 
     def display_production(self, prod, tira=None):
         """ Desplegar informacion de produccion"""
@@ -250,16 +277,21 @@ class CineAR:
             except Exception:
                 print("SID: {0}".format(prod['id']['sid']))
 
-
     def display_asociado(self, asociado):
         """Desplegar informacion de episodios de una serie."""
+        item = {
+            'titulo': asociado['tit'].capitalize(),
+            'sid': asociado['sid'],
+            'temp': asociado['tempo'],
+            'capi': asociado['capi'],
+        }
         print("- S{2}E{3} - Titulo: {0} - SID: {1}".format(
             asociado['tit'].upper(),
             asociado['sid'],
             asociado['tempo'],
             asociado['capi'],
         ))
-
+        return item
 
     def parse_qualities(self, qualities_options):
         """Parsear la calidad de videos disponibles en la produccion"""
@@ -279,7 +311,6 @@ class CineAR:
                 state = 'quality'
         return qualities
 
-
     def get_video_quality(self, qualities, default_quality='720p'):
         """Funcion para elegir la calidad de video"""
         if self.config:
@@ -289,21 +320,35 @@ class CineAR:
                     return v
         return list(qualities.values())[0]
 
+    def search_subproductions(self, prods):
+        serie_url = "{0}/INCAA/prod/{1}?perfil={2}".format(
+            self.API_URI, prods['id']['sid'], self.perfil
+        )
+        r = self.session.get(
+            serie_url
+        )
+        items = []
+        try:
+            for prod in r.json()['items']:
+                items.append(self.display_asociado(prod))
+        except Exception:
+            pass
+        return items
 
     def production_chuncks(self, data, digest_clave, play=True):
         """Obtener fragmentos de videos de la produccion"""
+        self.items = []
         chuncks = data["url"].split('/')[2:9]
         chuncks_url = 'https://' + '/'.join(chuncks)
 
         r = self.session.get(data["url"])
-
         if r.status_code == 403 or r.status_code == 404:
             # Check if it is a serie ?
             prod = data['url'].split('/INCAA/')[1].split('/')[0]
             serie_url = "{0}/INCAA/prod/{1}?perfil={2}".format(
-                self.API_URI, prod, perfil
+                self.API_URI, prod, self.perfil
             )
-            r = session.get(
+            r = self.session.get(
                 serie_url
             )
 
@@ -313,13 +358,14 @@ class CineAR:
                 )
                 exit()
 
+            items = []
             for prod in r.json()['items']:
-                self.display_asociado(prod)
+                items.append(self.display_asociado(prod))
+            self.items = items
 
         elif r.text:
             qualities_options = r.text.split()
             qualities_options = self.parse_qualities(qualities_options)
-
             video_quality = self.get_video_quality(qualities_options)
 
             data_url = chuncks_url + '/' + video_quality
@@ -327,18 +373,18 @@ class CineAR:
             r = self.session.get(data_url)
             lines = r.text.split()
 
-            self.download_chuncks(data["title"], chuncks_url, lines, play)
-
+            title = data['title'] + ' ' + data.get('subtitle', '')
+            self.download_chuncks(title, chuncks_url, lines, play)
+            self.items = 0
         else:
             print("Fallo la busqueda de la produccion, o la misma es inexistente")
             exit(0)
 
-
     def download_chuncks(self, title, chuncks_url, chuncks, play=True):
         """Descarga de fragmentos de pelicula."""
         # file = open("movie.txt","w")
-        name = title.lower().replace(' ','_')+'.avi'
-    
+        name = title.lower().replace(' ', '_')+'.avi'
+
         if self.config:
             video_path = self.config['download_dir']
             name = os.path.join(video_path, name)
@@ -374,7 +420,7 @@ class CineAR:
         except Exception:
             pass
 
-    def start_playing(title):
+    def start_playing(self, title):
         """Reproducir, llamando a proceso externo."""
         p = Popen(["mpv", title])
         return p
@@ -421,28 +467,27 @@ if __name__ == '__main__':
                 with open('config.yaml', 'w') as f:
                     yaml.dump(config, f)
 
-
     cinear = CineAR(
-        credentials={'email':email, 'password': passw},
+        credentials={'email': email, 'password': passw},
         config=config
     )
     # User Auth
     cinear.auth_login()
-    perfil = cinear.user_pid()
+    cinear.user_pid()
 
     # Parsing args
     if args['search'] or args['-s']:
-        cinear.search(args['<string>'], perfil)
+        cinear.search(args['<string>'])
 
     elif args['play'] or args['-p']:
         SID = args['SID']
-        data, digest_clave = cinear.production_id(SID, perfil, source='INCAA')
+        data, digest_clave = cinear.production_id(SID, source='INCAA')
         cinear.production_chuncks(data, digest_clave)
 
     elif args['download'] or args['-d']:
         play = False
         SID = args['SID']
-        data, digest_clave = cinear.production_id(SID, perfil, source='INCAA')
+        data, digest_clave = cinear.production_id(SID, source='INCAA')
         cinear.production_chuncks(data, digest_clave, play)
 
     elif args['home'] or args['-H']:
@@ -450,4 +495,4 @@ if __name__ == '__main__':
             tira = 'all'
         else:
             tira = args['<tira>']
-        cinear.user_home(perfil, tira)
+        cinear.user_home(tira)
