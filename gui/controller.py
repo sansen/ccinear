@@ -10,8 +10,6 @@
 # You should have received a copy of the GNU General Public License along
 # with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
-# For further info, check  https://launchpad.net/encuentro
-#
 # Copyright 2019-2020 Santiago Torres Batan
 
 import threading
@@ -43,7 +41,7 @@ class Controller:
         self.view.build_tree(items, reset=True)
 
     def search(self):
-        items = self.model.search(self.view.searchInput.toPlainText())
+        items = self.model.search(self.view.searchInput.text())
         self.view.build_tree(items, reset=True)
 
     def action(self):

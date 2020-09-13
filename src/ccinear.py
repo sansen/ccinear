@@ -10,11 +10,10 @@
 # You should have received a copy of the GNU General Public License along
 # with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
-# For further info, check  https://launchpad.net/encuentro
-#
 # Copyright 2019-2020 Santiago Torres Batan
 
-"""Console CineAR
+"""
+Console CineAR
 Maneja la interfaz de cine.ar desde la consola,
 realiza backups de tus peliculas favoritas, miralas offline.
 
@@ -61,12 +60,18 @@ import hashlib
 import requests
 import urllib.request
 
-from getpass import getpass
 from docopt import docopt
+from getpass import getpass
 from subprocess import Popen
 
 
 class CineAR:
+    """
+    Clase principal del programa utilizada para manejar la autenticacion
+    y demas request al sitio cinear.com.ar.
+    Ademas contiene la funcionalidad para reproducir un o descargar un
+    contenido.
+    """
     def __init__(self, credentials, config):
         self.credentials = credentials
         self.config = config
@@ -80,24 +85,26 @@ class CineAR:
 
         self.TIRAS = {
             'novedades': 'Novedades',
+            'estrenos': 'Jueves Estreno',
+            'ficmp': 'Especial Festival Internacional de Cine de Mar del Plata',
             'recomendadas': 'Películas recomendadas',
             'lomasvisto': 'Lo más visto',
             'series': 'Series imperdibles',
-            'cortos': 'Cortos para toda la familia',
+            'cortos': 'Los cortos más populares',
             'documentales': 'Documentales',
             'biopics': 'Biopics',
             'mayores': 'Apto para mayores',
-            'policiales': 'Policiales',
             'clasicos': 'Clásicos exclusivos',
             'breves': 'Historias Breves',
-            'diversidad': 'Cine y Diversidad',
+            'diversidad': 'Cine, diversidad y géneros',
+            # 'policiales': 'Policiales',
         }
 
         self.session = requests.Session()
         self.items = 0
 
     def get_headers(self, token=None, auth=None):
-        """Obtener header para request http"""
+        """Genera los headers para los request HTTP."""
         header = {
             'Content-Type': 'application/json;charset=utf-8',
             'Accept': 'application/json, text/plain',
@@ -128,7 +135,6 @@ class CineAR:
             r = self.session.post(
                 auth_url,
                 json=self.credentials
-                # headers=get_headers()
             )
             self.TOKEN = r.json()['token']
             self.session.headers.update(self.get_headers())
@@ -138,7 +144,7 @@ class CineAR:
             exit()
 
     def search(self, term):
-        """Buscar termnio en cinear"""
+        """Buscar termnio en cinear."""
         search_url = "{0}/search/{1}?cant=24&orden=rele&pag=1&perfil={2}".format(
             self.API_URI, term, self.perfil
         )
@@ -147,7 +153,7 @@ class CineAR:
         items = []
         for prod in r.json()['prods']:
             subitems = []
-            self.display_production(prod)
+            # self.display_production(prod)
             if prod.get('capitulo', '') is None:
                 subitems = self.search_subproductions(prod)
             items.append(
@@ -162,17 +168,21 @@ class CineAR:
                     'subitems': subitems,
                 }
             )
-            print("-"*80)
+            # print("-"*80)
         return items
 
     def user_home(self, tipotira='all'):
-        """HOME: Portada de cinear"""
+        """Request a la Portada de cinear."""
         home_url = "{0}/home?perfil={1}".format(self.API_URI, self.perfil)
         r = self.session.get(home_url)
         items = self.get_tiras(r.json(), tipotira)
         return items
 
     def get_tiras(self, data, tipotira='all'):
+        """
+        Obtiene el contenido de una tira (seccion de la pagina principal)
+        o varias.
+        """
         prods = data['prods']
         if tipotira == 'all':
             tiras = list(
@@ -196,8 +206,8 @@ class CineAR:
 
         items = []
         for tira in tiras:
-            print(tira['titulo'].upper())
-            print("="*80)
+            # print(tira['titulo'].upper())
+            # print("="*80)
             for conte in tira['conte']:
                 subitems = []
                 if prods[conte].get('capitulo', '') is None:
@@ -214,8 +224,8 @@ class CineAR:
                         'subitems': subitems,
                     }
                 )
-                self.display_production(prods[conte], tira)
-                print("-"*80)
+                # self.display_production(prods[conte], tira)
+                # print("-"*80)
 
         return items
 
@@ -257,7 +267,7 @@ class CineAR:
         return r.json(), digest_clave
 
     def display_production(self, prod, tira=None):
-        """ Desplegar informacion de produccion"""
+        """ Desplegar informacion de una produccion (contenido)."""
         try:
             print(":: {0} :: {1}".format(prod['tit'].upper(), tira['titulo']))
         except Exception:
@@ -277,7 +287,7 @@ class CineAR:
             except Exception:
                 print("SID: {0}".format(prod['id']['sid']))
 
-    def display_asociado(self, asociado):
+    def get_asociado(self, asociado):
         """Desplegar informacion de episodios de una serie."""
         item = {
             'titulo': asociado['tit'].capitalize(),
@@ -285,16 +295,16 @@ class CineAR:
             'temp': asociado['tempo'],
             'capi': asociado['capi'],
         }
-        print("- S{2}E{3} - Titulo: {0} - SID: {1}".format(
-            asociado['tit'].upper(),
-            asociado['sid'],
-            asociado['tempo'],
-            asociado['capi'],
-        ))
+        # print("- S{2}E{3} - Titulo: {0} - SID: {1}".format(
+        #     asociado['tit'].upper(),
+        #     asociado['sid'],
+        #     asociado['tempo'],
+        #     asociado['capi'],
+        # ))
         return item
 
     def parse_qualities(self, qualities_options):
-        """Parsear la calidad de videos disponibles en la produccion"""
+        """Parsear la calidad de videos disponibles en la produccion."""
         qualities = {}
         state = 'quality'
         for qline in qualities_options:
@@ -321,6 +331,10 @@ class CineAR:
         return list(qualities.values())[0]
 
     def search_subproductions(self, prods):
+        """
+        Obtiene informacion de subproducciones.
+        EJ: Capitulos de una serie.
+        """
         serie_url = "{0}/INCAA/prod/{1}?perfil={2}".format(
             self.API_URI, prods['id']['sid'], self.perfil
         )
@@ -330,13 +344,13 @@ class CineAR:
         items = []
         try:
             for prod in r.json()['items']:
-                items.append(self.display_asociado(prod))
+                items.append(self.get_asociado(prod))
         except Exception:
             pass
         return items
 
     def production_chuncks(self, data, digest_clave, play=True):
-        """Obtener fragmentos de videos de la produccion"""
+        """Obtener fragmentos de videos de la produccion."""
         self.items = []
         chuncks = data["url"].split('/')[2:9]
         chuncks_url = 'https://' + '/'.join(chuncks)
@@ -360,7 +374,7 @@ class CineAR:
 
             items = []
             for prod in r.json()['items']:
-                items.append(self.display_asociado(prod))
+                items.append(self.get_asociado(prod))
             self.items = items
 
         elif r.text:
@@ -399,7 +413,8 @@ class CineAR:
                 i = i+1
 
                 urllib.request.urlretrieve(
-                    "{0}/{1}\n".format(chuncks_url, chunck), name+'.part'+str(i)
+                    "{0}/{1}\n".format(chuncks_url, chunck),
+                    name+'.part'+str(i)
                 )
                 if not has_started:
                     has_started = True
@@ -422,7 +437,7 @@ class CineAR:
 
     def start_playing(self, title):
         """Reproducir, llamando a proceso externo."""
-        p = Popen(["mpv", title])
+        p = Popen(["xdg-open", title])
         return p
 
 

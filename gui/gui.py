@@ -10,8 +10,6 @@
 # You should have received a copy of the GNU General Public License along
 # with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
-# For further info, check  https://launchpad.net/encuentro
-#
 # Copyright 2019-2020 Santiago Torres Batan
 
 import sys
@@ -51,7 +49,7 @@ class Window(QtWidgets.QMainWindow):
         self.widget1.setLayout(self.layout1)
 
         self.layout1.addWidget(QtWidgets.QLabel("Buscar:"))
-        self.searchInput = QtWidgets.QTextEdit()
+        self.searchInput = QtWidgets.QLineEdit()
         self.layout1.addWidget(self.searchInput)
 
         self.ok_button = QtWidgets.QPushButton()
@@ -72,7 +70,6 @@ class Window(QtWidgets.QMainWindow):
         )
         self.treewidget.itemClicked.connect(self.on_item_clicked)
         self.treewidget.itemClicked.connect(self.action_signal)
-
         self.layout.addWidget(self.treewidget)
 
         self.tray_icon = QtWidgets.QSystemTrayIcon(self)
@@ -95,9 +92,11 @@ class Window(QtWidgets.QMainWindow):
         if col == 4 and it.text(4) == self.play_icon:
             self.action = [it.text(0), 'play']
             it.setText(4, self.stop_icon)
+            it.setToolTip(4, f"Reproduciendo")
         elif col == 5 and it.text(5) == self.download_icon:
             self.action = [it.text(0), 'down']
             it.setText(5, self.stop_icon)
+            it.setToolTip(5, f"Descargando")
 
     def set_items(self, items):
         self.cb.addItems([i.capitalize() for i in items.values()])
@@ -116,7 +115,9 @@ class Window(QtWidgets.QMainWindow):
             asociados = prod.get('subitems', [])
             if asociados == []:
                 item.setText(4, self.play_icon)
+                item.setToolTip(4, f"Reproducir")
                 item.setText(5, self.download_icon)
+                item.setToolTip(5, f"Descargar")
 
             # Sinopsis y Valoracion
             sino = ".\n".join(prod['sino'].strip().split('. '))
@@ -131,11 +132,14 @@ class Window(QtWidgets.QMainWindow):
             for i in range(int(ci_part)):
                 stars += '\u2606'
 
-            item.setToolTip(1, f"Sinopsis :: {sino}\n\nValoracion: {stars} ({rate})")
+            item.setToolTip(
+                1,
+                f"Sinopsis :: {sino}\n\nValoracion: {stars} ({rate})"
+            )
             self.build_sub_tree(item, asociados)
 
         header = self.treewidget.header()
-        self.treewidget.setColumnWidth(0, 75)
+        self.treewidget.setColumnWidth(0, 85)
         self.treewidget.setColumnWidth(2, 50)
         self.treewidget.setColumnWidth(3, 50)
         self.treewidget.setColumnWidth(4, 25)
@@ -149,6 +153,9 @@ class Window(QtWidgets.QMainWindow):
         header.setSectionResizeMode(5, QtWidgets.QHeaderView.Fixed)
         header.setStretchLastSection(False)
 
+        self.treewidget.sortByColumn(0, QtCore.Qt.AscendingOrder)
+        self.treewidget.setSortingEnabled(True)
+
     def build_sub_tree(self, parent_item, productions, reset=False):
         if reset:
             self.treewidget.clear()
@@ -157,8 +164,8 @@ class Window(QtWidgets.QMainWindow):
             item = QtWidgets.QTreeWidgetItem(parent_item)
             item.setText(0, f"{prod['sid']}")
             item.setText(1, f"{prod['titulo']}")
-            item.setText(2, f"{prod['temp']}")
-            item.setText(3, f"{prod['capi']}")
+            item.setText(2, f"S{prod['temp']:02}")
+            item.setText(3, f"E{prod['capi']:02}")
             item.setText(4, '\u25B6')
             item.setText(5, '\u2193')
 

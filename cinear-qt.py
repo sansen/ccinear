@@ -10,15 +10,14 @@
 # You should have received a copy of the GNU General Public License along
 # with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
-# For further info, check  https://launchpad.net/encuentro
-#
-# Copyright 2019 Santiago Torres Batan
+# Copyright 2019-2020 Santiago Torres Batan
 
-"""Console CineAR
+"""
+Console CineAR
+Version con Interfaz Grafica
+
 Maneja la interfaz de cine.ar desde la consola,
 realiza backups de tus peliculas favoritas, miralas offline.
-
-Interfaz Grafica
 
 Usage:
   cinear-qt.py [--user=<user>] [--passw]
@@ -30,12 +29,14 @@ Options:
   version     Show version.
 """
 
-import gui
+
 import sys
 import yaml
 import base64
-import ccinear
-import controller
+
+from gui import gui
+from gui import controller
+from src import ccinear
 
 from getpass import getpass
 from docopt import docopt
@@ -43,11 +44,11 @@ from PySide2 import QtWidgets
 
 
 def main(email, passw):
-    app = QtWidgets.QApplication([])
-    window = gui.Window()
-
     credentials = {'email': email, 'password': passw}
-    view = window
+
+    app = QtWidgets.QApplication([])
+    view = gui.Window()
+
     model = ccinear.CineAR(
         credentials=credentials,
         config=config
@@ -57,7 +58,7 @@ def main(email, passw):
 
 
 if __name__ == '__main__':
-    args = docopt(__doc__, version='Cine.ar qt v0.1')
+    args = docopt(__doc__, version='ccinear-qt v0.1')
 
     try:
         with open('config.yaml', 'r') as ymlfile:
