@@ -48,9 +48,9 @@ Dependencias adicionales:
 
 Se puede definir un archivo de configuracion:
 
-'config.yaml'
+'../config.yaml'
 
-en el mismo directorio donde se encuentra el script, con el siguiente contenido:
+en directorio raiz de donde se encuentra el script, con el siguiente contenido:
 
     email: mail@servider.com
     prefered\_video\_quality: '480p'
@@ -84,20 +84,21 @@ El SID se muestra en la informacion desplegada en consola cuando busca la pelicu
       SID         INCAA, Produccion ID
       <string>    String to search for
       <tira>      Lista de tiras, respetando la siguiente designacion
-          - tendencias: Tendencias,
-          - novedades: Novedades de esta semana,
-          - recomendadas: Películas recomendadas,
-          - amor: Por amor,
-          - mdq: MDQ Film Festival,
-          - series_maraton: Maratón de series,
-          - series_web: Series Web,
-          - clasicos: Clásicos exclusivos,
-          - animacion: Animación,
-          - cortos: Cortos imperdibles,
-          - musica: Música,
-          - biopics: Biopics,
-          - familia: Para ver en familia,
-      E.g: ccinear.py -H 'tendencias, amor, mdq'
+       - novedades: Novedades de la semana,
+       - juventudes: Juventudes en Movimiento,
+       - estrenos: Jueves Estreno,
+       - ficmp: Especial Festival Internacional de Cine de Mar del Plata,
+       - recomendadas: Películas recomendadas,
+       - lomasvisto: Lo más visto,
+       - series: Series imperdibles,
+       - cortos: Los cortos más populares,
+       - documentales: Documentales,
+       - biopics: Biopics,
+       - mayores: Apto para mayores,
+       - clasicos: Clásicos exclusivos,
+       - breves: Historias Breves,
+       - diversidad: Cine, diversidad y géneros
+      E.g: ccinear.py -H 'novedades, documentales'
 
 Ejemplo de uso:
 
@@ -119,6 +120,3 @@ con colores.
     python ccinear.py -s 'Cetaceos' | grep -E --color=auto '^|^SID:[ 0-9]+|^[A-Z ,:.]*$'
 
     python ccinear.py -H 'novedades' | grep -E --color=auto '^|^SID:[ 0-9]+|^::[A-Z :,.]*::'
-
--   TODO: Agregar colores y paginacion.
-

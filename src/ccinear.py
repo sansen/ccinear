@@ -35,21 +35,22 @@ Options:
   version     Show version.
   SID         INCAA, Produccion ID
   <string>    String to search for
-  <tira>      Lista de tiras, respetando la siguiente designacion
-      - tendencias: Tendencias,
-      - novedades: Novedades de esta semana,
-      - recomendadas: Películas recomendadas,
-      - amor: Por amor,
-      - mdq: MDQ Film Festival,
-      - series_maraton: Maratón de series,
-      - series_web: Series Web,
-      - clasicos: Clásicos exclusivos,
-      - animacion: Animación,
-      - cortos: Cortos imperdibles,
-      - musica: Música,
-      - biopics: Biopics,
-      - familia: Para ver en familia,
-  E.g: ccinear.py -H 'tendencias, amor, mdq'
+  <tira>      Lista de tiras, respetando la siguiente designacion:
+       - novedades: Novedades de la semana,
+       - juventudes: Juventudes en Movimiento,
+       - estrenos: Jueves Estreno,
+       - ficmp: Especial Festival Internacional de Cine de Mar del Plata,
+       - recomendadas: Películas recomendadas,
+       - lomasvisto: Lo más visto,
+       - series: Series imperdibles,
+       - cortos: Los cortos más populares,
+       - documentales: Documentales,
+       - biopics: Biopics,
+       - mayores: Apto para mayores,
+       - clasicos: Clásicos exclusivos,
+       - breves: Historias Breves,
+       - diversidad: Cine, diversidad y géneros
+  E.g: ccinear.py -H 'novedades, series, documentales'
 """
 
 import os
@@ -72,7 +73,7 @@ class CineAR:
     Ademas contiene la funcionalidad para reproducir un o descargar un
     contenido.
     """
-    def __init__(self, credentials, config):
+    def __init__(self, credentials, config, TUI=False):
         self.credentials = credentials
         self.config = config
         self.ID_URI = "https://id.cine.ar/v1.5"
@@ -83,8 +84,11 @@ class CineAR:
         self.auth = None
         self.perfil = None
 
+        self.TUI = TUI
+
         self.TIRAS = {
-            'novedades': 'Novedades',
+            'novedades': 'Novedades de la semana',
+            'juventudes': 'Juventudes en Movimiento',
             'estrenos': 'Jueves Estreno',
             'ficmp': 'Especial Festival Internacional de Cine de Mar del Plata',
             'recomendadas': 'Películas recomendadas',
@@ -153,7 +157,7 @@ class CineAR:
         items = []
         for prod in r.json()['prods']:
             subitems = []
-            # self.display_production(prod)
+            self.display_production(prod)
             if prod.get('capitulo', '') is None:
                 subitems = self.search_subproductions(prod)
             items.append(
@@ -168,7 +172,6 @@ class CineAR:
                     'subitems': subitems,
                 }
             )
-            # print("-"*80)
         return items
 
     def user_home(self, tipotira='all'):
@@ -206,10 +209,9 @@ class CineAR:
 
         items = []
         for tira in tiras:
-            # print(tira['titulo'].upper())
-            # print("="*80)
             for conte in tira['conte']:
                 subitems = []
+                self.display_production(prods[conte], tira)
                 if prods[conte].get('capitulo', '') is None:
                     subitems = self.search_subproductions(prods[conte])
                 items.append(
@@ -224,8 +226,6 @@ class CineAR:
                         'subitems': subitems,
                     }
                 )
-                # self.display_production(prods[conte], tira)
-                # print("-"*80)
 
         return items
 
@@ -267,6 +267,9 @@ class CineAR:
         return r.json(), digest_clave
 
     def display_production(self, prod, tira=None):
+        if not self.TUI:
+            return
+
         """ Desplegar informacion de una produccion (contenido)."""
         try:
             print(":: {0} :: {1}".format(prod['tit'].upper(), tira['titulo']))
@@ -286,6 +289,7 @@ class CineAR:
                 )
             except Exception:
                 print("SID: {0}".format(prod['id']['sid']))
+        print("-"*80)
 
     def get_asociado(self, asociado):
         """Desplegar informacion de episodios de una serie."""
@@ -295,12 +299,14 @@ class CineAR:
             'temp': asociado['tempo'],
             'capi': asociado['capi'],
         }
-        # print("- S{2}E{3} - Titulo: {0} - SID: {1}".format(
-        #     asociado['tit'].upper(),
-        #     asociado['sid'],
-        #     asociado['tempo'],
-        #     asociado['capi'],
-        # ))
+        if self.TUI:
+            print("- S{2}E{3} - Titulo: {0} - SID: {1}".format(
+                asociado['tit'].upper(),
+                asociado['sid'],
+                asociado['tempo'],
+                asociado['capi'],
+            ))
+            print("-"*80)
         return item
 
     def parse_qualities(self, qualities_options):
@@ -445,7 +451,7 @@ if __name__ == '__main__':
     args = docopt(__doc__, version='Cine.ar en consola v0.1')
 
     try:
-        with open('config.yaml', 'r') as ymlfile:
+        with open('../config.yaml', 'r') as ymlfile:
             config = yaml.load(ymlfile, Loader=yaml.FullLoader)
     except Exception:
         config = None
@@ -484,7 +490,8 @@ if __name__ == '__main__':
 
     cinear = CineAR(
         credentials={'email': email, 'password': passw},
-        config=config
+        config=config,
+        TUI=True
     )
     # User Auth
     cinear.auth_login()
