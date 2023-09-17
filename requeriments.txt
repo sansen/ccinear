@@ -1,4 +1,0 @@
-docopts==0.6.1
-PySide2==5.15.0
-PyYAML==5.1.2
-requests==2.22.0
