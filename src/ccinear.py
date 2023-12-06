@@ -35,22 +35,9 @@ Options:
   version     Show version.
   SID         INCAA, Produccion ID
   <string>    String to search for
-  <tira>      Lista de tiras, respetando la siguiente designacion:
-       - novedades: Novedades de la semana,
-       - juventudes: Juventudes en Movimiento,
-       - estrenos: Jueves Estreno,
-       - ficmp: Especial Festival Internacional de Cine de Mar del Plata,
-       - recomendadas: Películas recomendadas,
-       - lomasvisto: Lo más visto,
-       - series: Series imperdibles,
-       - cortos: Los cortos más populares,
-       - documentales: Documentales,
-       - biopics: Biopics,
-       - mayores: Apto para mayores,
-       - clasicos: Clásicos exclusivos,
-       - breves: Historias Breves,
-       - diversidad: Cine, diversidad y géneros
-  E.g: ccinear.py -H 'novedades, series, documentales'
+  <tira>      El numero de tira presentado, luego de tirar el comando
+              cinear.py -H
+  E.g: ccinear.py -H 
 """
 
 import os
@@ -85,24 +72,6 @@ class CineAR:
         self.perfil = None
 
         self.TUI = TUI
-
-        self.TIRAS = {
-            'novedades': 'Novedades de la semana',
-            'juventudes': 'Juventudes en Movimiento',
-            'estrenos': 'Jueves Estreno',
-            'ficmp': 'Especial Festival Internacional de Cine de Mar del Plata',
-            'recomendadas': 'Películas recomendadas',
-            'lomasvisto': 'Lo más visto',
-            'series': 'Series imperdibles',
-            'cortos': 'Los cortos más populares',
-            'documentales': 'Documentales',
-            'biopics': 'Biopics',
-            'mayores': 'Apto para mayores',
-            'clasicos': 'Clásicos exclusivos',
-            'breves': 'Historias Breves',
-            'diversidad': 'Cine, diversidad y géneros',
-            # 'policiales': 'Policiales',
-        }
 
         self.session = requests.Session()
         self.items = 0
@@ -178,13 +147,15 @@ class CineAR:
         """Request a la Portada de cinear."""
         home_url = "{0}/home?perfil={1}".format(self.API_URI, self.perfil)
         r = self.session.get(home_url)
-        items = self.get_tiras(r.json(), tipotira)
-        return items
+        jsonResponse = r.json()
+        self.TIRAS = list(filter(lambda x: x['titulo'] != 'Estrenos', jsonResponse['tiras']))
+        self.PRODS = jsonResponse['prods']
 
     def get_tiras(self, data, tipotira='all'):
         """
         Obtiene el contenido de una tira (seccion de la pagina principal)
         o varias.
+        https://play.cine.ar/api/v1.7/home?perfil=5ad12b35189ad4579d2a881e&prods=30
         """
         prods = data['prods']
         if tipotira == 'all':
@@ -229,6 +200,32 @@ class CineAR:
 
         return items
 
+    def set_tira(self,tira_index):
+        """
+        Setea la tira a desplegar segun el indice pasado por parametro.
+        """
+        prods = self.PRODS
+
+        items = []
+        for conte in self.TIRAS[tira_index]['conte']:
+            subitems = []
+            if prods[conte].get('capitulo', '') is None:
+                subitems = self.search_subproductions(prods[conte])
+            items.append(
+                {
+                    'sid': prods[conte]['id']['sid'],
+                    'titulo': prods[conte]['tit'],
+                    'sino': prods[conte]['sino'],
+                    'dura': prods[conte].get('dura', ''),
+                    'foto': prods[conte].get('foto', ''),
+                    'anio': prods[conte].get('an', ''),
+                    'rate': prods[conte].get('rProme', 3),
+                    'subitems': subitems,
+                }
+            )
+
+        return items
+
     def user_info(self):
         """Informacion del Usuario."""
         user_info_url = '{0}/auth/user_info'.format(self.ID_URI)
@@ -266,11 +263,19 @@ class CineAR:
         r = self.session.get(url)
         return r.json(), digest_clave
 
+    def display_tiras(self, tira=None):
+        if tira:
+            for conte in self.TIRAS[tira]['conte']:
+                self.display_production(self.PRODS[conte], self.TIRAS[tira]['titulo'])
+        else:
+            for i, tira in enumerate(self.TIRAS):
+                print(":: {0} :: {1}".format(i, tira['titulo']))
+
     def display_production(self, prod, tira=None):
+        """ Desplegar informacion de una produccion (contenido)."""
         if not self.TUI:
             return
 
-        """ Desplegar informacion de una produccion (contenido)."""
         try:
             print(":: {0} :: {1}".format(prod['tit'].upper(), tira['titulo']))
         except Exception:
@@ -405,7 +410,7 @@ class CineAR:
         # file = open("movie.txt","w")
         name = title.lower().replace(' ', '_')+'.avi'
 
-        if self.config:
+        if self.config and 'download_dir' in self.config:
             video_path = self.config['download_dir']
             name = os.path.join(video_path, name)
         else:
@@ -448,7 +453,7 @@ class CineAR:
 
 
 if __name__ == '__main__':
-    args = docopt(__doc__, version='Cine.ar en consola v0.1')
+    args = docopt(__doc__, version='Cine.ar en consola v0.2')
 
     try:
         with open('../config.yaml', 'r') as ymlfile:
@@ -513,8 +518,10 @@ if __name__ == '__main__':
         cinear.production_chuncks(data, digest_clave, play)
 
     elif args['home'] or args['-H']:
+        cinear.user_home()
         if not args['<tira>']:
-            tira = 'all'
+            tira = ''
         else:
-            tira = args['<tira>']
-        cinear.user_home(tira)
+            tira = int(args['<tira>'])
+        if cinear.TUI:
+            cinear.display_tiras(tira)

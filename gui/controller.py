@@ -24,6 +24,7 @@ class Controller:
     def init(self):
         self.model.auth_login()
         self.model.user_pid()
+        self.model.user_home()
 
         self.view.set_items(self.model.TIRAS)
         self.view.section_selection_signal.connect(self.section_selection)
@@ -32,12 +33,13 @@ class Controller:
         self.download_thread = None
 
         # Seteo Novedades
-        items = self.model.user_home(tipotira='novedades')
+        items = self.model.set_tira(0)
         self.view.build_tree(items, reset=True)
 
     def section_selection(self):
-        tira = list(self.model.TIRAS.keys())[self.view.cb.currentIndex()]
-        items = self.model.user_home(tira)
+        # tira = list(self.model.TIRAS.keys())[self.view.cb.currentIndex()]
+        tira = self.view.cb.currentIndex()
+        items = self.model.set_tira(tira)
         self.view.build_tree(items, reset=True)
 
     def search(self):

@@ -99,7 +99,7 @@ class Window(QtWidgets.QMainWindow):
             it.setToolTip(5, f"Descargando")
 
     def set_items(self, items):
-        self.cb.addItems([i.capitalize() for i in items.values()])
+        self.cb.addItems([i['titulo'].capitalize() for i in items])
 
     def build_tree(self, productions, reset=False):
         if reset:
