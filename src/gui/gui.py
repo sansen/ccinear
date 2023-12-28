@@ -13,13 +13,14 @@
 # Copyright 2019-2020 Santiago Torres Batan
 
 import sys
-from PySide2 import QtWidgets, QtCore
+from PySide2 import QtWidgets, QtCore, QtGui
 
 
 class Window(QtWidgets.QMainWindow):
     search_signal = QtCore.Signal()
     action_signal = QtCore.Signal()
     section_selection_signal = QtCore.Signal()
+    preferences_signal = QtCore.Signal()
 
     def __init__(self, parent=None):
         super(Window, self).__init__(parent=parent)
@@ -27,6 +28,10 @@ class Window(QtWidgets.QMainWindow):
         self.play_icon = '\u25B6'
         self.download_icon = '\u2193'
         self.stop_icon = '\u25a0'
+        self.pause_icon = '\u23F8'
+        self.pref_icon = '\u2699'
+
+        self.preferences_config = {}
 
         width = 460
         height = 640
@@ -57,7 +62,13 @@ class Window(QtWidgets.QMainWindow):
         self.ok_button.setText('OK')
         self.ok_button.clicked.connect(self.search_signal)
 
+        self.pref_button = QtWidgets.QPushButton()
+        self.pref_button.setFixedWidth(50)
+        self.pref_button.setText(self.pref_icon)
+        self.pref_button.clicked.connect(self.open_preferences_dialog)
+
         self.layout1.addWidget(self.ok_button)
+        self.layout1.addWidget(self.pref_button)
 
         self.cb = QtWidgets.QComboBox()
         self.cb.currentIndexChanged.connect(self.section_selection_signal)
@@ -90,13 +101,17 @@ class Window(QtWidgets.QMainWindow):
         self.currentItem = it
         self.action = []
         if col == 4 and it.text(4) == self.play_icon:
-            self.action = [it.text(0), 'play']
+            self.action = [it.text(0), 'play', it]
             it.setText(4, self.stop_icon)
             it.setToolTip(4, f"Reproduciendo")
         elif col == 5 and it.text(5) == self.download_icon:
-            self.action = [it.text(0), 'down']
-            it.setText(5, self.stop_icon)
+            self.action = [it.text(0), 'down', it]
+            it.setText(5, self.pause_icon)
             it.setToolTip(5, f"Descargando")
+        elif col == 5 and it.text(5) == self.pause_icon:
+            self.action = [it.text(0), 'stop', it]
+            it.setText(5, self.download_icon)
+            it.setToolTip(5, f"")
 
     def set_items(self, items):
         self.cb.addItems([i['titulo'].capitalize() for i in items])
@@ -176,11 +191,88 @@ class Window(QtWidgets.QMainWindow):
         if reason == QtWidgets.QSystemTrayIcon.Trigger:
             self.show()
 
+    def update_progress(self, item, current_download):
+        gradient = QtGui.QLinearGradient(0, 0, 1, 0)
+        gradient.setCoordinateMode(QtGui.QLinearGradient.StretchToDeviceMode)
+        gradient.setColorAt(0, QtGui.QColor('Green'))
+        gradient.setColorAt(current_download, QtGui.QColor('White'))
+        brush = QtGui.QBrush(gradient)
+
+        item.setBackground(0, QtGui.QBrush(brush))
+
+    def open_preferences_dialog(self):
+        pf = PreferencesDialog(self)
+        pf.exec()
+
     # Override closeEvent, to intercept the window closing event
     # The window will be closed only if there is no check mark in the check box
     def closeEvent(self, event):
         event.ignore()
         self.hide()
+
+
+
+class PreferencesDialog(QtWidgets.QDialog):        
+    def __init__(self, parent=None):
+        super().__init__(parent)
+
+        self.parent = parent
+        self.setWindowTitle("Preferences")
+
+        self.buttonBox = QtWidgets.QDialogButtonBox(
+            QtWidgets.QDialogButtonBox.Save)
+        self.buttonBox.accepted.connect(self.accept_preferences)
+        # self.buttonBox.rejected.connect(self.reject_preferences)
+
+        self.dir_button = QtWidgets.QPushButton()
+        self.dir_button.setFixedWidth(50)
+        self.dir_button.setText('Browse')
+        self.dir_button.clicked.connect(self.browse_clicked)
+
+        self.vLayout = QtWidgets.QVBoxLayout()
+        # self.hLayout = QtWidgets.QHBoxLayout()
+
+        message = QtWidgets.QLabel("Select Download Dir")
+        self.fileConfig = QtWidgets.QLineEdit()
+
+        message2 = QtWidgets.QLabel("Select Prefferred Video Quality")
+        self.cb = QtWidgets.QComboBox()
+        self.cb.addItems(["360p", "480p", "720p", "1080p"])
+
+        self.vLayout.addWidget(message)
+        self.vLayout.addWidget(self.fileConfig)
+        self.vLayout.addWidget(self.dir_button)
+        self.vLayout.addWidget(message2)
+        self.vLayout.addWidget(self.cb)
+
+        # self.vLayout.addWidget(self.hLayout)
+        self.vLayout.addWidget(self.buttonBox)
+        self.setLayout(self.vLayout)
+
+    def browse_clicked(self):
+        filepath = QtWidgets.QFileDialog.getExistingDirectory(self, 'Select Folder')
+        if filepath:
+            self.fileConfig.setText(filepath)
+
+    def accept_preferences(self):
+        fpath = self.fileConfig.text()
+        pQuality = self.cb.currentText()
+        config = {}
+        if fpath:
+            config['download_dir'] = fpath
+            changed = True
+        if pQuality:
+            config['prefered_video_quality'] = pQuality
+            changed = True
+
+        if changed:
+            self.parent.preferences_config = config
+            self.parent.preferences_signal.emit()
+
+        self.close()
+
+    def reject_preferences(self):
+        self.close()
 
 
 if __name__ == '__main__':

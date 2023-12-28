@@ -14,54 +14,49 @@
 
 """
 Console CineAR
-Version con Interfaz Grafica
-
 Maneja la interfaz de cine.ar desde la consola,
 realiza backups de tus peliculas favoritas, miralas offline.
 
+No dejes de utilizar cine.ar y apoyar
+el desarrollo del cine argentino.
+
+No infringas el copyright
+
 Usage:
-  cinear-qt.py [--user=<user>] [--passw]
-  cinear-qt.py (-h | --help)
-  cinear-qt.py --version
+  ccinear.py [--user=<user>] [--passw] (play | -p) SID
+  ccinear.py [--user=<user>] [--passw] [--path=/path/to/downloaddir/] (download | -d) SID
+  ccinear.py [--user=<user>] [--passw] (home | -H) [<tira>]
+  ccinear.py [--user=<user>] [--passw] (search | -s) <string>
+  ccinear.py (-h | --help)
+  ccinear.py --version
 
 Options:
   -h --help   Show this screen.
   version     Show version.
+  SID         INCAA, Produccion ID
+  <string>    String to search for
+  <tira>      El numero de tira presentado, luego de tirar el comando
+              cinear.py -H
+  E.g: ccinear.py -H 
 """
-
-
-import sys
+import os
+import sys 
 import yaml
 import base64
 
-from gui import gui
-from gui import controller
-from src import ccinear
-
-from getpass import getpass
 from docopt import docopt
-from PySide2 import QtWidgets
+from getpass import getpass
+from subprocess import Popen
 
-
-def main(email, passw):
-    credentials = {'email': email, 'password': passw}
-
-    app = QtWidgets.QApplication([])
-    view = gui.Window()
-
-    model = ccinear.CineAR(
-        credentials=credentials,
-        config=config
-    )
-    c = controller.Controller(model=model, view=view)
-    sys.exit(app.exec_())
-
+# relative imports
+sys.path.append(os.getcwd() + "/model")
+import cinear
 
 if __name__ == '__main__':
-    args = docopt(__doc__, version='ccinear-qt v0.1')
+    args = docopt(__doc__, version='Cine.ar en consola v0.2')
 
     try:
-        with open('config.yaml', 'r') as ymlfile:
+        with open('config/config.yaml', 'r') as ymlfile:
             config = yaml.load(ymlfile, Loader=yaml.FullLoader)
     except Exception:
         config = None
@@ -71,7 +66,7 @@ if __name__ == '__main__':
         email = args['--user']
         if config:
             config['user'] = args['--user']
-            with open('config.yaml', 'w') as f:
+            with open('config/config.yaml', 'w') as f:
                 yaml.dump(config, f)
     else:
         try:
@@ -86,7 +81,7 @@ if __name__ == '__main__':
         passw = getpass()
         if config:
             config['passw'] = base64.b64encode(str.encode(passw))
-            with open('config.yaml', 'w') as f:
+            with open('config/config.yaml', 'w') as f:
                 yaml.dump(config, f)
     else:
         try:
@@ -95,7 +90,5 @@ if __name__ == '__main__':
             passw = getpass()
             if config:
                 config['passw'] = base64.b64encode(str.encode(passw))
-                with open('config.yaml', 'w') as f:
+                with open('config/config.yaml', 'w') as f:
                     yaml.dump(config, f)
-
-    main(email, passw)
