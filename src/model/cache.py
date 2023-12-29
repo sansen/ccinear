@@ -14,9 +14,9 @@
 
 
 import datetime
-import pickle 
+import pickle
 
-       
+
 class CinearCache:
     """
     Mantiene un cache con los resultados de request a la api,

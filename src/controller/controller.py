@@ -13,8 +13,7 @@
 # Copyright 2019-2020 Santiago Torres Batan
 
 import threading
-from datetime import datetime as datetime_, timedelta
-from PySide2 import QtGui
+
 
 class Controller:
     def __init__(self, model, view):
@@ -49,13 +48,7 @@ class Controller:
             self.view.build_tree(items, reset=True)
 
     def update_config(self):
-        self.model.update_config(self.view.preferences_config)   
-
-
-    def qWait(self, t):
-        end = datetime_.now() + timedelta(milliseconds=t)
-        while datetime_.now() < end:
-            QtGui.QGuiApplication.processEvents()
+        self.model.update_config(self.view.preferences_config)
 
     def action(self):
         if self.view.action == []:
@@ -88,8 +81,8 @@ class Controller:
         #     if sid in self.model.dm.current_downloads:
         #         if self.model.dm.current_downloads[sid]['completed'] == False:
         #             self.view.update_progress(item, self.model.dm.current_downloads[sid]['progress'])
-        #             self.qWait(2000)
+        #             self.view.qWait(2000)
         #         else:
         #             break
-            
+
         #self.download_thread.join()

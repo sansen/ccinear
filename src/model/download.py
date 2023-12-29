@@ -29,7 +29,7 @@ from PySide2 import QtWidgets, QtCore
 class DownloadManager:
     """
     Clase que maneja las descargas efectivas de los contenidos.
-    Ademas selecciona la calidad que mejor aplique para la descarga    
+    Ademas selecciona la calidad que mejor aplique para la descarga
     """
 
     def __init__(self, config):
@@ -138,6 +138,6 @@ class DownloadManager:
         """Reproducir, llamando a proceso externo."""
         p = Popen(["xdg-open", title])
         return p
-        
+
     def pause_download(self, sid):
         self.current_downloads[sid]['paused'] = True

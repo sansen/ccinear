@@ -37,10 +37,10 @@ Options:
   <string>    String to search for
   <tira>      El numero de tira presentado, luego de tirar el comando
               cinear.py -H
-  E.g: ccinear.py -H 
+  E.g: ccinear.py -H
 """
 import os
-import sys 
+import sys
 import yaml
 import base64
 

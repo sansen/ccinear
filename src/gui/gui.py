@@ -14,6 +14,7 @@
 
 import sys
 from PySide2 import QtWidgets, QtCore, QtGui
+from datetime import datetime as datetime_, timedelta
 
 
 class Window(QtWidgets.QMainWindow):
@@ -204,6 +205,11 @@ class Window(QtWidgets.QMainWindow):
         pf = PreferencesDialog(self)
         pf.exec()
 
+    def qWait(self, t):
+        end = datetime_.now() + timedelta(milliseconds=t)
+        while datetime_.now() < end:
+            QtGui.QGuiApplication.processEvents()
+
     # Override closeEvent, to intercept the window closing event
     # The window will be closed only if there is no check mark in the check box
     def closeEvent(self, event):
@@ -212,7 +218,7 @@ class Window(QtWidgets.QMainWindow):
 
 
 
-class PreferencesDialog(QtWidgets.QDialog):        
+class PreferencesDialog(QtWidgets.QDialog):
     def __init__(self, parent=None):
         super().__init__(parent)
 

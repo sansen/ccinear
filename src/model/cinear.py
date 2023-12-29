@@ -37,7 +37,7 @@ Options:
   <string>    String to search for
   <tira>      El numero de tira presentado, luego de tirar el comando
               cinear.py -H
-  E.g: ccinear.py -H 
+  E.g: ccinear.py -H
 """
 
 import os
@@ -129,7 +129,7 @@ class CineAR:
             # set to cache
             self.cc.set('token', self.TOKEN)
             self.cc.set('headers', self.get_headers())
-            
+
         except Exception:
             print('Fallo la autenticacion')
             exit()
@@ -157,7 +157,7 @@ class CineAR:
         perfil = self.cc.get('perfil')
         if perfil:
             self.perfil = perfil
-            return  
+            return
 
         user_url = "{0}/user".format(self.API_URI)
         r = self.session.get(user_url)
