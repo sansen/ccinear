@@ -23,23 +23,22 @@ el desarrollo del cine argentino.
 No infringas el copyright
 
 Usage:
-  cinear-all.py [--user=<user>] [--passw] [--gui]
-  cinear-all.py [--user=<user>] [--passw] (play | -p) SID
-  cinear-all.py [--user=<user>] [--passw] [--path=/path/to/downloaddir/] (download | -d) SID
-  cinear-all.py [--user=<user>] [--passw] (home | -H) [<tira>]
-  cinear-all.py [--user=<user>] [--passw] (search | -s) <string>
+  cinear-all.py [--user=<user>] [--passw] gui
+  cinear-all.py [--user=<user>] [--passw] play SID
+  cinear-all.py [--user=<user>] [--passw] [--path=/path/to/downloaddir/] download SID
+  cinear-all.py [--user=<user>] [--passw] home [<tira>]
+  cinear-all.py [--user=<user>] [--passw] search <string>
   cinear-all.py (-h | --help)
-  cinear-all.py --version
+  cinear-all.py (-v | --version)
 
 Options:
-  --ui        Select User iterface (GUI or TUI)
-  -h --help   Show this screen.
-  version     Show version.
-  SID         INCAA, Produccion ID
-  <string>    String to search for
-  <tira>      El numero de tira presentado, luego de tirar el comando
-              cinear.py -H
-  E.g: ccinear.py -H 
+  -h --help     Show this screen.
+  -v --version  Show version.
+  SID           INCAA, Produccion ID
+  <string>      String to search for
+  <tira>        El numero de tira presentado. Ejecutar primero cineae-all.py -H
+
+  E.g: ccinear-all.py -H
 """
 
 import os
@@ -56,11 +55,11 @@ from docopt import docopt
 from PySide2 import QtWidgets
 
 
-def mainGui(email, passw):
+def mainGui(email, passw, config):
     credentials = {'email': email, 'password': passw}
 
     app = QtWidgets.QApplication([])
-    view = Window()
+    view = Window(config)
 
     model = CineAR(
         credentials=credentials,
@@ -81,21 +80,21 @@ def mainTui(email, passw, config, args):
     cinear.user_pid()
 
     # Parsing args
-    if args['search'] or args['-s']:
+    if args['search']:
         cinear.search(args['<string>'])
 
-    elif args['play'] or args['-p']:
+    elif args['play']:
         SID = args['SID']
         data, digest_clave = cinear.production_id(SID, source='INCAA')
-        cinear.production_chuncks(data, digest_clave)
+        cinear.production_chuncks(data, digest_clave, SID)
 
-    elif args['download'] or args['-d']:
+    elif args['download']:
         play = False
         SID = args['SID']
         data, digest_clave = cinear.production_id(SID, source='INCAA')
-        cinear.production_chuncks(data, digest_clave, play)
+        cinear.production_chuncks(data, digest_clave, SID, play)
 
-    elif args['home'] or args['-H']:
+    elif args['home']:
         cinear.user_home()
         if not args['<tira>']:
             tira = False
@@ -120,7 +119,7 @@ if __name__ == '__main__':
         if config:
             with open('config/config.yaml', 'w') as f:
                 yaml.dump(config, f)
-            
+
     else:
         try:
             email = config['user']
@@ -146,7 +145,7 @@ if __name__ == '__main__':
             with open('config/config.yaml', 'w') as f:
                 yaml.dump(config, f)
 
-    if args['--gui']:
-        mainGui(email, passw)
+    if args['gui']:
+        mainGui(email, passw, config)
     else:
         mainTui(email, passw, config, args)

@@ -18,12 +18,15 @@ from datetime import datetime as datetime_, timedelta
 
 
 class Window(QtWidgets.QMainWindow):
+    """
+    Clase de la ventana principal 
+    """
     search_signal = QtCore.Signal()
     action_signal = QtCore.Signal()
     section_selection_signal = QtCore.Signal()
     preferences_signal = QtCore.Signal()
 
-    def __init__(self, parent=None):
+    def __init__(self, config, parent=None):
         super(Window, self).__init__(parent=parent)
 
         self.play_icon = '\u25B6'
@@ -32,10 +35,10 @@ class Window(QtWidgets.QMainWindow):
         self.pause_icon = '\u23F8'
         self.pref_icon = '\u2699'
 
-        self.preferences_config = {}
+        self.preferences_config = config
 
-        width = 460
-        height = 640
+        width = 540
+        height = 720
 
         title = "CineAR - ¿Que queres ver?"
         self.setWindowTitle(title)
@@ -219,11 +222,15 @@ class Window(QtWidgets.QMainWindow):
 
 
 class PreferencesDialog(QtWidgets.QDialog):
+    """
+    Clase de la ventana de dialogo de prefenrencias 
+    """
+
     def __init__(self, parent=None):
         super().__init__(parent)
 
         self.parent = parent
-        self.setWindowTitle("Preferences")
+        self.setWindowTitle("Preferencias")
 
         self.buttonBox = QtWidgets.QDialogButtonBox(
             QtWidgets.QDialogButtonBox.Save)
@@ -231,19 +238,26 @@ class PreferencesDialog(QtWidgets.QDialog):
         # self.buttonBox.rejected.connect(self.reject_preferences)
 
         self.dir_button = QtWidgets.QPushButton()
-        self.dir_button.setFixedWidth(50)
+        self.dir_button.setFixedWidth(80)
         self.dir_button.setText('Browse')
         self.dir_button.clicked.connect(self.browse_clicked)
 
         self.vLayout = QtWidgets.QVBoxLayout()
         # self.hLayout = QtWidgets.QHBoxLayout()
 
-        message = QtWidgets.QLabel("Select Download Dir")
+        message = QtWidgets.QLabel("Directorio de Descarga")
         self.fileConfig = QtWidgets.QLineEdit()
+        self.fileConfig.setText(self.parent.preferences_config.get("download_dir"))
 
-        message2 = QtWidgets.QLabel("Select Prefferred Video Quality")
+        message2 = QtWidgets.QLabel("Calidad de Video")
         self.cb = QtWidgets.QComboBox()
-        self.cb.addItems(["360p", "480p", "720p", "1080p"])
+        # Valores Harcodeados:
+        # Correspoden a las calidades de Cinear
+        qaValues = ["360p", "480p", "720p", "1080p"]
+        self.cb.addItems(qaValues)
+
+        cvq = qaValues.index(self.parent.preferences_config.get('prefered_video_quality'))
+        self.cb.setCurrentIndex(cvq)
 
         self.vLayout.addWidget(message)
         self.vLayout.addWidget(self.fileConfig)
@@ -256,14 +270,18 @@ class PreferencesDialog(QtWidgets.QDialog):
         self.setLayout(self.vLayout)
 
     def browse_clicked(self):
-        filepath = QtWidgets.QFileDialog.getExistingDirectory(self, 'Select Folder')
+        dialog = QtWidgets.QFileDialog(self)
+        dialog.setDirectory(self.parent.preferences_config.get("download_dir"))
+        filepath = dialog.getExistingDirectory(self, 'Select Folder')
+
         if filepath:
             self.fileConfig.setText(filepath)
 
     def accept_preferences(self):
+        config = self.parent.preferences_config
         fpath = self.fileConfig.text()
         pQuality = self.cb.currentText()
-        config = {}
+
         if fpath:
             config['download_dir'] = fpath
             changed = True
@@ -272,7 +290,6 @@ class PreferencesDialog(QtWidgets.QDialog):
             changed = True
 
         if changed:
-            self.parent.preferences_config = config
             self.parent.preferences_signal.emit()
 
         self.close()

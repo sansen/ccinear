@@ -30,6 +30,7 @@ class Controller:
         self.view.search_signal.connect(self.search)
         self.view.action_signal.connect(self.action)
         self.view.preferences_signal.connect(self.update_config)
+        self.view.section_selection_signal.connect(self.section_selection)
         self.download_thread = None
 
         # Seteo Novedades
@@ -85,4 +86,4 @@ class Controller:
         #         else:
         #             break
 
-        #self.download_thread.join()
+        # self.download_thread.join()

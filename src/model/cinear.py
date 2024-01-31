@@ -47,6 +47,7 @@ import base64
 import hashlib
 import requests
 import urllib.request
+import logging
 
 from docopt import docopt
 from getpass import getpass
@@ -56,6 +57,7 @@ from model.download import DownloadManager
 from model.contents import ContentManager
 from model.cache import CinearCache
 
+logging.basicConfig(filename='debug.log',format='%(asctime)s - %(levelname)s - %(message)s', level=logging.DEBUG, filemode='a')
 
 class CineAR:
     """
@@ -139,7 +141,9 @@ class CineAR:
         jsonResponse = self.cc.get('user_home')
         if not jsonResponse:
             home_url = "{0}/home?perfil={1}".format(self.API_URI, self.perfil)
+            logging.debug('Request Home: %s', home_url)
             r = self.session.get(home_url)
+
             jsonResponse = r.json()
             # set to cache
             self.cc.set('user_home', jsonResponse)
@@ -149,7 +153,9 @@ class CineAR:
     def user_info(self):
         """Informacion del Usuario."""
         user_info_url = '{0}/auth/user_info'.format(self.ID_URI)
+        logging.debug('Request User: %s', user_info_url)
         r = self.session.get(user_info_url)
+
         return r
 
     def user_pid(self):
@@ -160,7 +166,9 @@ class CineAR:
             return
 
         user_url = "{0}/user".format(self.API_URI)
+        logging.debug('Request Perfil: %s', user_url)
         r = self.session.get(user_url)
+
         user = r.json()
         self.perfil = user['perfiles'][0]['id']
         # set to cache
@@ -174,9 +182,9 @@ class CineAR:
         serie_url = "{0}/INCAA/prod/{1}?perfil={2}".format(
             API_URI, prods['id']['sid'], perfil
         )
-        r = session.get(
-            serie_url
-        )
+        logging.debug('Request Serie: %s', serie_url)
+        r = session.get(serie_url)
+
         return r.json()['items']
 
     def set_tira(self,tira_index):
@@ -219,6 +227,7 @@ class CineAR:
         search_url = "{0}/search/{1}?cant=24&orden=rele&pag=1&perfil={2}".format(
             self.API_URI, term, self.perfil
         )
+        logging.debug('Request Search: %s', search_url)
         r = self.session.get(search_url)
 
         items = []
@@ -270,6 +279,7 @@ class CineAR:
         self.auth = digest_clave
         self.session.headers.update(self.get_headers())
 
+        logging.debug('Request Production: %s', url)
         r = self.session.get(url)
         return r.json(), digest_clave
 
@@ -286,9 +296,7 @@ class CineAR:
             serie_url = "{0}/INCAA/prod/{1}?perfil={2}".format(
                 self.API_URI, prod, self.perfil
             )
-            r = self.session.get(
-                serie_url
-            )
+            r = self.session.get(serie_url)
 
             if r.status_code == 403 or r.status_code == 404:
                 print(
