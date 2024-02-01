@@ -110,15 +110,11 @@ if __name__ == '__main__':
         with open('config/config.yaml', 'r') as ymlfile:
             config = yaml.load(ymlfile, Loader=yaml.FullLoader)
     except Exception:
-        config = None
+        config = {}
 
     # Setting User
     if args['--user']:
         email = args['--user']
-        config['user'] = args['--user']
-        if config:
-            with open('config/config.yaml', 'w') as f:
-                yaml.dump(config, f)
 
     else:
         try:
@@ -131,19 +127,17 @@ if __name__ == '__main__':
     # Setting Password
     if args['--passw']:
         passw = getpass()
-        config['passw'] = base64.b64encode(str.encode(passw))
-        if config:
-            with open('config/config.yaml', 'w') as f:
-                yaml.dump(config, f)
+
     else:
         try:
             passw = base64.b64decode(config['passw']).decode('utf-8')
-            config['passw'] = base64.b64encode(str.encode(passw))
         except Exception:
             passw = getpass()
-            config['passw'] = base64.b64encode(str.encode(passw))
-            with open('config/config.yaml', 'w') as f:
-                yaml.dump(config, f)
+
+    config['user'] = email
+    config['passw'] = base64.b64encode(str.encode(passw))
+    with open('config/config.yaml', 'w+') as f:
+        yaml.dump(config, f)
 
     if args['gui']:
         mainGui(email, passw, config)
