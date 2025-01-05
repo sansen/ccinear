@@ -27,3 +27,18 @@
 
 # TODO Nombre de archivos
 
+# Testing Terminal
+>> OK
+
+# Agregar loggin
+>> OK
+
+# Crear cache para archivos ya descargados
+# Crear iconos para indicar contenidos ya descargados
+# Cuando termina la descarga modificar icono
+# Utilizar async io para requests
+# Utilizar async io para descargas
+# Revisar como es request con QT
+# Terminar de cerrar el LOGIN y configuracion
+# Open download directory
+
