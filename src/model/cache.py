@@ -29,10 +29,12 @@ class CinearCache:
             with open(self.cache_path, 'rb') as f:
                 self.values = pickle.load(f)
                 # Si pasa mas de 1 dia
-                if (self.values['timestamp'] + datetime.timedelta(days=1)) > datetime.datetime.now():
+                if (self.values['timestamp'] + datetime.timedelta(days=1)) < datetime.datetime.now():
                     self.values = {}
+                    self.values['timestamp'] = datetime.datetime.now()
         except FileNotFoundError:
             # print('The file does not exist.')
+            self.values['timestamp'] = datetime.datetime.now()
             pass
 
     def get(self, key):
@@ -40,6 +42,5 @@ class CinearCache:
 
     def set(self, key, value):
         self.values[key] = value
-        self.values['timestamp'] = datetime.datetime.now()
         with open(self.cache_path, 'wb') as f:
             pickle.dump(self.values, f)
