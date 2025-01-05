@@ -10,14 +10,14 @@
 # You should have received a copy of the GNU General Public License along
 # with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
-# Copyright 2019-2023 Santiago Torres Batan
+# Copyright 2019-2024 Santiago Torres Batan
 
 """
 Console CineAR
 Maneja la interfaz de cine.ar desde la consola,
 realiza backups de tus peliculas favoritas, miralas offline.
 
-No dejes de utilizar cine.ar y apoyar
+No dejes de utilizar cine.ar y apoya
 el desarrollo del cine argentino.
 
 No infringas el copyright
@@ -35,9 +35,9 @@ Options:
   version     Show version.
   SID         INCAA, Produccion ID
   <string>    String to search for
-  <tira>      El numero de tira presentado, luego de tirar el comando
-              cinear.py -H
-  E.g: ccinear.py -H
+  <tira>      El numero de tira presentado, luego de ejecutar el comando
+              cinear.py home
+  E.g: ccinear.py home 4
 """
 
 import os
@@ -193,6 +193,8 @@ class CineAR:
         """
         prods = self.cm.get_prods()
         tira = self.cm.get_tira_content(tira_index)
+
+        logging.debug('TIRAS: %s', tira)
 
         items = []
         for conte in tira:
